@@ -12,11 +12,15 @@ board = np.array(
     [[3, 1, 1, 0], [0, 2, 1, 0], [0, 2, 1, 0], [0, 2, 2, 3]], dtype=np.int8
 )
 
-rows = 4
-cols = 4
+# last player pieces expressed in (row, col)
+last_piece_p1 = [(0, 1), (0, 2), (1, 2), (2, 2)]
+last_piece_p2 = [(1, 1), (2, 1), (3, 1), (3, 2)]
+
+board_rows = 4
+board_cols = 4
 cell_border = 4
-x = int(RESOLUTION[0] / 2 - (cols / 2 * cell_size - cell_border / 2))
-y = int(RESOLUTION[1] / 2 - (rows / 2 * cell_size - cell_border / 2))
+x = int(RESOLUTION[0] / 2 - (board_cols / 2 * cell_size - cell_border / 2))
+y = int(RESOLUTION[1] / 2 - (board_rows / 2 * cell_size - cell_border / 2))
 colors = {1: (255, 0, 0), 2: (0, 0, 255)}
 
 selected_cells = 0
@@ -25,9 +29,30 @@ good_piece = True
 player = 1
 
 
+def get_last_piece():
+    rows, cols = np.where(board == player)
+    cells = list(zip(rows, cols))
+
+    return cells
+
+
+def check_change():
+    if player == 1:
+        last_piece = last_piece_p1
+    else:
+        last_piece = last_piece_p2
+
+    change = False
+    for cell in last_piece:
+        if board[cell] != player:
+            change = True
+
+    return change
+
+
 def draw_board():
-    for row in range(rows):
-        for col in range(cols):
+    for row in range(board_rows):
+        for col in range(board_cols):
             pos_x = x + col * cell_size
             pos_y = y + row * cell_size
             border = cell_border
@@ -80,7 +105,7 @@ def draw_board():
 
 
 def find_L():
-    for row in range(rows - 1):
+    for row in range(board_rows - 1):
         for col in range(2):
             if (
                 (
@@ -111,7 +136,7 @@ def find_L():
                 return True
 
     for row in range(2):
-        for col in range(cols - 1):
+        for col in range(board_cols - 1):
             if (
                 (
                     board[0 + row, 0 + col] == player
@@ -161,8 +186,10 @@ while True:
                 mouse_down = True
             if event.button == 3 and good_piece:
                 if player == 1:
+                    last_piece_p1 = get_last_piece()
                     player = 2
                 else:
+                    last_piece_p2 = get_last_piece()
                     player = 1
 
                 clear_board()
@@ -171,7 +198,7 @@ while True:
                 if selected_cells != 4:
                     clear_board()
                 else:
-                    if find_L():
+                    if find_L() and check_change():
                         good_piece = True
                     else:
                         clear_board()
@@ -183,7 +210,12 @@ while True:
         mouse_col = (mouse_x - x) // cell_size
         mouse_row = (mouse_y - y) // cell_size
 
-        if mouse_col >= 0 and mouse_col < cols and mouse_row >= 0 and mouse_row < rows:
+        if (
+            mouse_col >= 0
+            and mouse_col < board_cols
+            and mouse_row >= 0
+            and mouse_row < board_rows
+        ):
             if good_piece:
                 clear_board()
 
