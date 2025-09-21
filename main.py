@@ -26,7 +26,10 @@ colors = {1: (255, 0, 0), 2: (0, 0, 255)}
 selected_cells = 0
 mouse_down = False
 good_piece = True
+start_game = False
 player = 1
+holding_neutral_piece = False
+selected_neutral_piece = None
 
 empty_board_surface = pygame.Surface((board_rows * cell_size, board_cols * cell_size))
 empty_board_surface.fill((255, 255, 255))
@@ -109,10 +112,14 @@ def draw_board():
             elif board[row, col] == 3:
                 radius = int(cell_size / 2)
                 center_x = x + col * cell_size - cell_border * col + radius
-                center_y = y + row * cell_size - cell_border * col + radius
+                center_y = y + row * cell_size - cell_border * row + radius
+                color = (0, 0, 0)
+
+                if selected_neutral_piece and (row, col) == selected_neutral_piece:
+                    color = (50, 50, 50)
 
                 pygame.draw.aacircle(
-                    screen, (0, 0, 0), (center_x, center_y), radius - cell_border
+                    screen, color, (center_x, center_y), radius - cell_border
                 )
 
 
@@ -186,42 +193,84 @@ def clear_board():
     board[board == player] = 0
 
 
+def change_player():
+    global player, last_piece_p1, last_piece_p2
+
+    if player == 1:
+        last_piece_p1 = get_last_piece()
+        player = 2
+    else:
+        last_piece_p2 = get_last_piece()
+        player = 1
+
+    clear_board()
+
+
 while True:
+    mouse_x, mouse_y = pygame.mouse.get_pos()
+    mouse_col = (mouse_x - x) // cell_size
+    mouse_row = (mouse_y - y) // cell_size
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT or (
             event.type == pygame.KEYDOWN and event.key == pygame.K_q
         ):
             pygame.quit()
             sys.exit()
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:
-                mouse_down = True
-            if event.button == 3 and good_piece:
-                if player == 1:
-                    last_piece_p1 = get_last_piece()
-                    player = 2
-                else:
-                    last_piece_p2 = get_last_piece()
-                    player = 1
 
-                clear_board()
-        elif event.type == pygame.MOUSEBUTTONUP:
-            if event.button == 1:
-                if selected_cells != 4:
-                    clear_board()
-                else:
-                    if find_L() and check_change():
-                        good_piece = True
-                    else:
+        if start_game:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:
+                    mouse_down = True
+
+                    if (
+                        good_piece
+                        and mouse_col >= 0
+                        and mouse_col < board_cols
+                        and mouse_row >= 0
+                        and mouse_row < board_rows
+                        and board[mouse_row, mouse_col] == 3
+                        and not holding_neutral_piece
+                    ):
+                        holding_neutral_piece = True
+                        selected_neutral_piece = (mouse_row, mouse_col)
+
+                if event.button == 3 and good_piece:
+                    change_player()
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:
+
+                    if holding_neutral_piece:
+                        holding_neutral_piece = False
+
+                        if (
+                            mouse_col >= 0
+                            and mouse_col < board_cols
+                            and mouse_row >= 0
+                            and mouse_row < board_rows
+                            and board[mouse_row, mouse_col] == 0
+                        ):
+                            board[selected_neutral_piece] = 0
+                            board[mouse_row, mouse_col] = 3
+                            change_player()
+
+                        selected_neutral_piece = None
+
+                    elif selected_cells != 4:
                         clear_board()
+                    else:
+                        if find_L() and check_change():
+                            good_piece = True
+                        else:
+                            clear_board()
 
-                mouse_down = False
+                    mouse_down = False
+        else:
+            if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                start_game = True
+                clear_board()
 
-    if mouse_down:
-        mouse_x, mouse_y = pygame.mouse.get_pos()
-        mouse_col = (mouse_x - x) // cell_size
-        mouse_row = (mouse_y - y) // cell_size
-
+    if mouse_down and start_game and not holding_neutral_piece:
         if (
             mouse_col >= 0
             and mouse_col < board_cols
@@ -229,7 +278,8 @@ while True:
             and mouse_row < board_rows
         ):
             if good_piece:
-                clear_board()
+                if board[mouse_row, mouse_col] != 3:
+                    clear_board()
 
             elif selected_cells < 4 and board[mouse_row, mouse_col] == 0:
                 board[mouse_row, mouse_col] = player
@@ -238,5 +288,10 @@ while True:
     screen.fill((255, 255, 255))
 
     draw_board()
+
+    if holding_neutral_piece:
+        pygame.draw.aacircle(
+            screen, (0, 0, 0), (mouse_x, mouse_y), int(cell_size / 2) - cell_border
+        )
 
     pygame.display.flip()
