@@ -90,13 +90,15 @@ def draw_board():
                     if row - 1 >= 0 and board[row - 1, col] == board[row, col]:
                         pos_y -= cell_border * 2
                         tam_y += cell_border * 2
-                    elif col - 1 >= 0 and board[row, col - 1] == board[row, col]:
-                        pos_x -= cell_border * 2
-                        tam_x += cell_border * 2
-                    elif (
-                        col + 1 < board_cols and board[row, col + 1] == board[row, col]
-                    ):
-                        tam_x += cell_border
+                    else:
+                        if col - 1 >= 0 and board[row, col - 1] == board[row, col]:
+                            pos_x -= cell_border * 2
+                            tam_x += cell_border * 2
+                        if (
+                            col + 1 < board_cols
+                            and board[row, col + 1] == board[row, col]
+                        ):
+                            tam_x += cell_border
 
                 pygame.draw.rect(
                     screen,
