@@ -1,6 +1,7 @@
 import pygame
 import sys
 import numpy as np
+import ptext
 
 pygame.init()
 RESOLUTION = (640, 480)
@@ -128,7 +129,7 @@ def draw_board():
                 )
 
 
-def count_L(cell_type):
+def count_L(cell_type, board):
     possible_L = 0
 
     for row in range(board_rows - 1):
@@ -205,6 +206,8 @@ def clear_board():
 def change_player():
     global winner, player, last_piece_p1, last_piece_p2, turn, playing
 
+    turn += 1
+
     if player == 1:
         last_piece_p1 = get_last_piece()
         player = 2
@@ -212,18 +215,20 @@ def change_player():
         last_piece_p2 = get_last_piece()
         player = 1
 
-    clear_board()
+    copy_board = board.copy()
+    copy_board[copy_board == player] = 0
 
-    print(count_L(0) - 1)
-    turn += 1
+    print(f"Possible player's {player} moves: {count_L(0, copy_board) - 1}")
 
-    if count_L(0) == 1:
+    if count_L(0, copy_board) == 1:
         if player == 1:
-            winner = 2
+            winner = "Blue"
         else:
-            winner = 1
+            winner = "Red"
 
         playing = False
+    else:
+        clear_board()
 
 
 while True:
@@ -279,7 +284,7 @@ while True:
                     elif selected_cells != 4:
                         clear_board()
                     else:
-                        if count_L(player) > 0 and check_change():
+                        if count_L(player, board) > 0 and check_change():
                             good_piece = True
                         else:
                             clear_board()
@@ -322,20 +327,13 @@ while True:
         )
 
     if not playing and turn > 0:
-        text_surface = font.render(f"Player {winner} wins!", True, colors[winner])
-        outline_surface = font.render(f"Player {winner} wins!", True, (0, 0, 0))
-
-        text_rect = text_surface.get_rect()
-        text_x = int(RESOLUTION[0] / 2 - text_rect.width / 2)
-        text_y = int(RESOLUTION[1] / 2 - text_rect.height / 2)
-
-        outline = 2
-
-        screen.blit(outline_surface, (text_x - outline, text_y - outline))
-        screen.blit(outline_surface, (text_x + outline, text_y - outline))
-        screen.blit(outline_surface, (text_x - outline, text_y + outline))
-        screen.blit(outline_surface, (text_x + outline, text_y + outline))
-
-        screen.blit(text_surface, (text_x, text_y))
+        ptext.draw(
+            f"{winner} wins",
+            owidth=1.5,
+            ocolor=(0, 0, 0),
+            color=(255, 255, 255),
+            center=(int(RESOLUTION[0] / 2), int(RESOLUTION[1] / 2)),
+            fontsize=100,
+        )
 
     pygame.display.flip()
