@@ -6,7 +6,6 @@ pygame.init()
 RESOLUTION = (640, 480)
 screen = pygame.display.set_mode(RESOLUTION)
 
-
 cell_size = 100
 board = np.zeros((4, 4), dtype=np.int8)
 rows = 4
@@ -15,6 +14,11 @@ cell_border = 2
 x = int(RESOLUTION[0] / 2 - (cols / 2 * cell_size))
 y = int(RESOLUTION[1] / 2 - (rows / 2 * cell_size))
 colors = {1: (255, 0, 0), 2: (0, 0, 255)}
+
+selected_cells = 0
+mouse_down = False
+good_piece = False
+player = 1
 
 
 def draw_board():
@@ -43,12 +47,6 @@ def draw_board():
                         cell_size - cell_border * 2,
                     ),
                 )
-
-
-selected_cells = 0
-mouse_down = False
-good_piece = False
-player = 1
 
 
 def find_L():
@@ -113,6 +111,14 @@ def find_L():
                 return True
 
 
+def clear_board():
+    global good_piece, selected_cells, board
+
+    good_piece = False
+    selected_cells = 0
+    board[board == player] = 0
+
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT or (
@@ -123,17 +129,22 @@ while True:
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
                 mouse_down = True
+            if event.button == 3 and good_piece:
+                if player == 1:
+                    player = 2
+                else:
+                    player = 1
+
+                clear_board()
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:
                 if selected_cells != 4:
-                    board[board == player] = 0
-                    selected_cells = 0
+                    clear_board()
                 else:
                     if find_L():
                         good_piece = True
                     else:
-                        board[board == player] = 0
-                        selected_cells = 0
+                        clear_board()
 
                 mouse_down = False
 
@@ -141,18 +152,12 @@ while True:
         mouse_x, mouse_y = pygame.mouse.get_pos()
         mouse_col = (mouse_x - x) // cell_size
         mouse_row = (mouse_y - y) // cell_size
-        if (
-            mouse_col >= 0
-            and mouse_col < cols
-            and mouse_row >= 0
-            and mouse_row < rows
-            and board[mouse_row, mouse_col] == 0
-        ):
+
+        if mouse_col >= 0 and mouse_col < cols and mouse_row >= 0 and mouse_row < rows:
             if good_piece:
-                board[board == player] = 0
-                good_piece = False
-                selected_cells = 0
-            elif selected_cells < 4:
+                clear_board()
+
+            elif selected_cells < 4 and board[mouse_row, mouse_col] == 0:
                 board[mouse_row, mouse_col] = player
                 selected_cells += 1
 
