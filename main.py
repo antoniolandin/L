@@ -37,14 +37,27 @@ def draw_board():
             )
 
             if board[row, col] != 0:
+                pos_x = x + col * cell_size + cell_border
+                pos_y = y + row * cell_size + cell_border
+                tam_x = cell_size - cell_border * 2
+                tam_y = cell_size - cell_border * 2
+
+                if board[row, col] != player or good_piece:
+                    if row - 1 >= 0 and board[row - 1, col] == board[row, col]:
+                        pos_y -= cell_border * 2
+                        tam_y += cell_border * 2
+                    if col - 1 >= 0 and board[row, col - 1] == board[row, col]:
+                        pos_x -= cell_border * 2
+                        tam_x += cell_border * 2
+
                 pygame.draw.rect(
                     screen,
                     colors[board[row, col]],
                     (
-                        x + col * cell_size + cell_border,
-                        y + row * cell_size + cell_border,
-                        cell_size - cell_border * 2,
-                        cell_size - cell_border * 2,
+                        pos_x,
+                        pos_y,
+                        tam_x,
+                        tam_y,
                     ),
                 )
 
