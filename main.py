@@ -74,7 +74,9 @@ def draw_board():
                 center_x = x + col * cell_size - cell_border * col + radius
                 center_y = y + row * cell_size - cell_border * col + radius
 
-                pygame.draw.circle(screen, (0, 0, 0), (center_x, center_y), radius)
+                pygame.draw.aacircle(
+                    screen, (0, 0, 0), (center_x, center_y), radius - cell_border
+                )
 
 
 def find_L():
