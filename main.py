@@ -5,6 +5,7 @@ import numpy as np
 pygame.init()
 RESOLUTION = (640, 480)
 screen = pygame.display.set_mode(RESOLUTION)
+font = pygame.font.Font(None, 100)
 
 cell_size = 100
 
@@ -26,7 +27,9 @@ colors = {1: (255, 0, 0), 2: (0, 0, 255)}
 selected_cells = 0
 mouse_down = False
 good_piece = True
-start_game = False
+playing = False
+turn = 0
+winner = None
 player = 1
 holding_neutral_piece = False
 selected_neutral_piece = None
@@ -125,66 +128,70 @@ def draw_board():
                 )
 
 
-def find_L():
+def count_L(cell_type):
+    possible_L = 0
+
     for row in range(board_rows - 1):
         for col in range(2):
             if (
                 (
-                    board[0 + row, 0 + col] == player
-                    and board[0 + row, 1 + col] == player
-                    and board[0 + row, 2 + col] == player
-                    and board[1 + row, 0 + col] == player
+                    board[0 + row, 0 + col] == cell_type
+                    and board[0 + row, 1 + col] == cell_type
+                    and board[0 + row, 2 + col] == cell_type
+                    and board[1 + row, 0 + col] == cell_type
                 )
                 or (
-                    board[0 + row, 0 + col] == player
-                    and board[1 + row, 0 + col] == player
-                    and board[1 + row, 1 + col] == player
-                    and board[1 + row, 2 + col] == player
+                    board[0 + row, 0 + col] == cell_type
+                    and board[1 + row, 0 + col] == cell_type
+                    and board[1 + row, 1 + col] == cell_type
+                    and board[1 + row, 2 + col] == cell_type
                 )
                 or (
-                    board[1 + row, 0 + col] == player
-                    and board[1 + row, 1 + col] == player
-                    and board[1 + row, 2 + col] == player
-                    and board[0 + row, 2 + col] == player
+                    board[1 + row, 0 + col] == cell_type
+                    and board[1 + row, 1 + col] == cell_type
+                    and board[1 + row, 2 + col] == cell_type
+                    and board[0 + row, 2 + col] == cell_type
                 )
                 or (
-                    board[0 + row, 0 + col] == player
-                    and board[0 + row, 1 + col] == player
-                    and board[0 + row, 2 + col] == player
-                    and board[1 + row, 2 + col]
+                    board[0 + row, 0 + col] == cell_type
+                    and board[0 + row, 1 + col] == cell_type
+                    and board[0 + row, 2 + col] == cell_type
+                    and board[1 + row, 2 + col] == cell_type
                 )
             ):
-                return True
+                possible_L += 1
 
     for row in range(2):
         for col in range(board_cols - 1):
             if (
                 (
-                    board[0 + row, 0 + col] == player
-                    and board[1 + row, 0 + col] == player
-                    and board[2 + row, 0 + col] == player
-                    and board[2 + row, 1 + col] == player
+                    board[0 + row, 0 + col] == cell_type
+                    and board[1 + row, 0 + col] == cell_type
+                    and board[2 + row, 0 + col] == cell_type
+                    and board[2 + row, 1 + col] == cell_type
                 )
                 or (
-                    board[0 + row, 1 + col] == player
-                    and board[1 + row, 1 + col] == player
-                    and board[2 + row, 1 + col] == player
-                    and board[2 + row, 0 + col] == player
+                    board[0 + row, 1 + col] == cell_type
+                    and board[1 + row, 1 + col] == cell_type
+                    and board[2 + row, 1 + col] == cell_type
+                    and board[2 + row, 0 + col] == cell_type
                 )
                 or (
-                    board[0 + row, 1 + col] == player
-                    and board[0 + row, 0 + col] == player
-                    and board[1 + row, 0 + col] == player
-                    and board[2 + row, 0 + col] == player
+                    board[0 + row, 1 + col] == cell_type
+                    and board[0 + row, 0 + col] == cell_type
+                    and board[1 + row, 0 + col] == cell_type
+                    and board[2 + row, 0 + col] == cell_type
                 )
                 or (
-                    board[0 + row, 0 + col] == player
-                    and board[0 + row, 1 + col] == player
-                    and board[1 + row, 1 + col] == player
-                    and board[2 + row, 1 + col] == player
+                    board[0 + row, 0 + col] == cell_type
+                    and board[0 + row, 1 + col] == cell_type
+                    and board[1 + row, 1 + col] == cell_type
+                    and board[2 + row, 1 + col] == cell_type
                 )
             ):
-                return True
+                possible_L += 1
+
+    return possible_L
 
 
 def clear_board():
@@ -196,7 +203,7 @@ def clear_board():
 
 
 def change_player():
-    global player, last_piece_p1, last_piece_p2
+    global winner, player, last_piece_p1, last_piece_p2, turn, playing
 
     if player == 1:
         last_piece_p1 = get_last_piece()
@@ -206,6 +213,17 @@ def change_player():
         player = 1
 
     clear_board()
+
+    print(count_L(0) - 1)
+    turn += 1
+
+    if count_L(0) == 1:
+        if player == 1:
+            winner = 2
+        else:
+            winner = 1
+
+        playing = False
 
 
 while True:
@@ -220,7 +238,7 @@ while True:
             pygame.quit()
             sys.exit()
 
-        if start_game:
+        if playing:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     mouse_down = True
@@ -239,9 +257,9 @@ while True:
 
                 if event.button == 3 and good_piece:
                     change_player()
+
             elif event.type == pygame.MOUSEBUTTONUP:
                 if event.button == 1:
-
                     if holding_neutral_piece:
                         holding_neutral_piece = False
 
@@ -261,18 +279,25 @@ while True:
                     elif selected_cells != 4:
                         clear_board()
                     else:
-                        if find_L() and check_change():
+                        if count_L(player) > 0 and check_change():
                             good_piece = True
                         else:
                             clear_board()
 
                     mouse_down = False
         else:
-            if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                start_game = True
+            if (
+                event.type == pygame.MOUSEBUTTONDOWN
+                and mouse_col >= 0
+                and mouse_col < board_cols
+                and mouse_row >= 0
+                and mouse_row < board_rows
+                and turn == 0
+            ):
+                playing = True
                 clear_board()
 
-    if mouse_down and start_game and not holding_neutral_piece:
+    if mouse_down and playing and not holding_neutral_piece:
         if (
             mouse_col >= 0
             and mouse_col < board_cols
@@ -295,5 +320,22 @@ while True:
         pygame.draw.aacircle(
             screen, (0, 0, 0), (mouse_x, mouse_y), int(cell_size / 2) - cell_border
         )
+
+    if not playing and turn > 0:
+        text_surface = font.render(f"Player {winner} wins!", True, colors[winner])
+        outline_surface = font.render(f"Player {winner} wins!", True, (0, 0, 0))
+
+        text_rect = text_surface.get_rect()
+        text_x = int(RESOLUTION[0] / 2 - text_rect.width / 2)
+        text_y = int(RESOLUTION[1] / 2 - text_rect.height / 2)
+
+        outline = 2
+
+        screen.blit(outline_surface, (text_x - outline, text_y - outline))
+        screen.blit(outline_surface, (text_x + outline, text_y - outline))
+        screen.blit(outline_surface, (text_x - outline, text_y + outline))
+        screen.blit(outline_surface, (text_x + outline, text_y + outline))
+
+        screen.blit(text_surface, (text_x, text_y))
 
     pygame.display.flip()
