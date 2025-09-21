@@ -28,6 +28,27 @@ mouse_down = False
 good_piece = True
 player = 1
 
+empty_board_surface = pygame.Surface((board_rows * cell_size, board_cols * cell_size))
+empty_board_surface.fill((255, 255, 255))
+
+for row in range(board_rows):
+    for col in range(board_cols):
+        pos_x = col * cell_size
+        pos_y = row * cell_size
+        border = cell_border
+
+        pygame.draw.rect(
+            empty_board_surface,
+            (0, 0, 0),
+            (
+                pos_x - cell_border * col,
+                pos_y - cell_border * row,
+                cell_size,
+                cell_size,
+            ),
+            border,
+        )
+
 
 def get_last_piece():
     rows, cols = np.where(board == player)
@@ -51,23 +72,10 @@ def check_change():
 
 
 def draw_board():
+    screen.blit(empty_board_surface, (x, y))
+
     for row in range(board_rows):
         for col in range(board_cols):
-            pos_x = x + col * cell_size
-            pos_y = y + row * cell_size
-            border = cell_border
-
-            pygame.draw.rect(
-                screen,
-                (0, 0, 0),
-                (
-                    pos_x - cell_border * col,
-                    pos_y - cell_border * row,
-                    cell_size,
-                    cell_size,
-                ),
-                border,
-            )
 
             if board[row, col] == 1 or board[row, col] == 2:
                 pos_x = x + col * cell_size + cell_border - cell_border * col
@@ -79,9 +87,13 @@ def draw_board():
                     if row - 1 >= 0 and board[row - 1, col] == board[row, col]:
                         pos_y -= cell_border * 2
                         tam_y += cell_border * 2
-                    if col - 1 >= 0 and board[row, col - 1] == board[row, col]:
+                    elif col - 1 >= 0 and board[row, col - 1] == board[row, col]:
                         pos_x -= cell_border * 2
                         tam_x += cell_border * 2
+                    elif (
+                        col + 1 < board_cols and board[row, col + 1] == board[row, col]
+                    ):
+                        tam_x += cell_border
 
                 pygame.draw.rect(
                     screen,
