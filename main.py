@@ -7,38 +7,46 @@ RESOLUTION = (640, 480)
 screen = pygame.display.set_mode(RESOLUTION)
 
 cell_size = 100
-board = np.zeros((4, 4), dtype=np.int8)
+
+board = np.array(
+    [[3, 1, 1, 0], [0, 2, 1, 0], [0, 2, 1, 0], [0, 2, 2, 3]], dtype=np.int8
+)
+
 rows = 4
 cols = 4
-cell_border = 2
-x = int(RESOLUTION[0] / 2 - (cols / 2 * cell_size))
-y = int(RESOLUTION[1] / 2 - (rows / 2 * cell_size))
+cell_border = 4
+x = int(RESOLUTION[0] / 2 - (cols / 2 * cell_size - cell_border / 2))
+y = int(RESOLUTION[1] / 2 - (rows / 2 * cell_size - cell_border / 2))
 colors = {1: (255, 0, 0), 2: (0, 0, 255)}
 
 selected_cells = 0
 mouse_down = False
-good_piece = False
+good_piece = True
 player = 1
 
 
 def draw_board():
     for row in range(rows):
         for col in range(cols):
+            pos_x = x + col * cell_size
+            pos_y = y + row * cell_size
+            border = cell_border
+
             pygame.draw.rect(
                 screen,
                 (0, 0, 0),
                 (
-                    x + col * cell_size,
-                    y + row * cell_size,
+                    pos_x - cell_border * col,
+                    pos_y - cell_border * row,
                     cell_size,
                     cell_size,
                 ),
-                cell_border,
+                border,
             )
 
-            if board[row, col] != 0:
-                pos_x = x + col * cell_size + cell_border
-                pos_y = y + row * cell_size + cell_border
+            if board[row, col] == 1 or board[row, col] == 2:
+                pos_x = x + col * cell_size + cell_border - cell_border * col
+                pos_y = y + row * cell_size + cell_border - cell_border * row
                 tam_x = cell_size - cell_border * 2
                 tam_y = cell_size - cell_border * 2
 
@@ -60,6 +68,13 @@ def draw_board():
                         tam_y,
                     ),
                 )
+
+            elif board[row, col] == 3:
+                radius = int(cell_size / 2)
+                center_x = x + col * cell_size - cell_border * col + radius
+                center_y = y + row * cell_size - cell_border * col + radius
+
+                pygame.draw.circle(screen, (0, 0, 0), (center_x, center_y), radius)
 
 
 def find_L():
